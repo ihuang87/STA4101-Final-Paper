@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt 
+import re
+import pandas as pd
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 # import data
 movies = pd.read_table("/Users/bellehuang/Downloads/STA4101/final_project/movies.txt")
@@ -116,4 +119,28 @@ plt.show()
 ## Numerical Summaries
 print(max(movies["Gross"]), min(movies["Gross"]), np.mean(movies["Gross"]))
 print(max(movies["Tickets.Sold"]), min(movies["Tickets.Sold"]), np.mean(movies["Tickets.Sold"]))
+
+
+## Data Cleaning
+
+# remove N/A's if there are any
+required_cols = ["Movie", "Tickets.Sold", "Year", "Distributor", "Genre", "MPAA", "Gross"]
+movie = movies.dropna(subset=required_cols).reset_index(drop=True)
+
+# pick out frequent words and aggregate columns
+titles = movies["Movie"].fillna("").str.lower()
+
+# letters/numbers only, drop stopwords, count frequencies
+tokens = titles.str.findall(r"[a-z0-9]+")
+tokens = tokens.apply(lambda lst: [w for w in lst if w not in ENGLISH_STOP_WORDS and len(w) > 1])
+
+freq = pd.Series([w for lst in tokens for w in lst]).value_counts()
+top5 = freq.head(5).index.tolist()
+print("Top 5 words:", top5)
+
+# Add 5 binary predictors: 1 if word appears in title, else 0
+for w in top5:
+    col = f"title_has_{w}"
+    movies[col] = titles.str.contains(fr"\b{re.escape(w)}\b", regex=True).astype(int)
+
 

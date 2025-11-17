@@ -41,7 +41,7 @@ num_cols = [c for c in ["ReleaseYear", "ReleaseMonth"] if c in X.columns]
 preprocess = ColumnTransformer(
     transformers=[
         ("num", SimpleImputer(strategy="median"), num_cols),
-        ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
+        ("cat", OneShotEncoder(handle_unknown="ignore"), cat_cols),
     ]
 )
 
