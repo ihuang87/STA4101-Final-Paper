@@ -77,5 +77,44 @@ print("Final formula:", current_formula)
 print(model.summary())
 #removed two predictors but retains the same R^2 and other criteria, stick with this one
 
+# the descriptive model for predicting tickets_sold only has R^2 = 0.35, not high, try to predict gross with tickets_sold,
+# expects better results
 
+# make sure Gross is numeric
+movies["Gross"] = pd.to_numeric(movies["Gross"], errors="coerce")
 
+# OLS
+formula_gross = (
+    "Gross ~ tickets_sold + release_year + release_month"
+    " + C(Distributor) + C(Genre) + C(MPAA)"
+    " + title_has_man + title_has_love + title_has_life"
+)
+m_full = smf.ols(formula_gross, data=movies).fit()
+print(m_full.summary())
+
+# variable selection
+alpha = 0.05
+terms = [
+    "tickets_sold", "release_year", "release_month",
+    "C(Distributor)", "C(Genre)", "C(MPAA)",
+    "title_has_man", "title_has_love", "title_has_life"
+]
+
+def fit_terms(ts):
+    f = "Gross ~ " + " + ".join(ts)
+    return smf.ols(f, data=movies).fit(), f
+
+model, current = fit_terms(terms)
+
+while True:
+    aov = anova_lm(model, typ=2).drop(index="Residual")
+    worst = aov["PR(>F)"].idxmax()
+    worst_p = aov.loc[worst, "PR(>F)"]
+    if worst_p <= alpha:
+        break
+    # Remove that term and refit
+    terms = [t for t in terms if t != worst]
+    model, current = fit_terms(terms)
+
+print("Final formula (p-value backward):", current)
+print(model.summary())
