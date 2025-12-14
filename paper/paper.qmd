@@ -12,20 +12,23 @@ format:
     pdf:
         toc: true
         number-sections: true
-number-sections: true
+        fig-align: center
+
 # bibliography: references.bib
 ---
 
 
 # Introduction
 
-Movie theatres are a common destination for families and friends to gather, enjoy a visual adventure, and briefly escape from real life at a relatively low cost. Yet thousands of films are released worldwide each year. What determines which movies audiences choose, and which titles succeed at the box office? Prior studies have examined determinants such as budget, distribution, sequels, star power, reviews, and word-of-mouth, and have used these variables to model or forecast revenues. In this project, we adopt a similar perspective but ask a more restrictive question: how much of a movie’s box office can be explained using only very simple, easily available information?
+Movie theatres are a common destination for families and friends to gather, enjoy a visual adventure, and briefly escape from real life at a relatively low cost. Yet thousands of films are released worldwide each year, only few are remembered and or even watched by more than a few audience. What determines which movies audiences choose, and which titles succeed at the box office? Prior studies have examined determinants such as budget, distribution, sequels, star power, reviews, and word-of-mouth, and have used these variables to model or forecast revenues. Many studies used complicated models with many predictors to accompolish this task, but is there a way to model the same thing with minimal predictors and simple models? If so, we can make our decisions with much less cost, both in collecting data and performing analysis. In this project, we ask this restrictive question: how much of a movie’s box office can be explained using only very simple, easily available information?
 
 To investigate this, we fit a linear regression model using only Genre, Distributor, MPAA rating, release date (year and month), and a few indicator variables capturing whether the movie title contains certain frequent words, to predict the number of tickets sold. We then use the linear model’s insights to build a shallow neural network and assess whether a more flexible model can substantially improve predictive accuracy using the same limited feature set. This allows us to test whether movie box office outcomes can be adequately captured by basic categorical attributes and coarse timing information alone.
 
-Our results suggest that these simple variables are far from sufficient. Even after tuning, the linear regression model achieves an $R^2$ of only about 0.35, indicating that most of the variation in ticket sales remains unexplained. The neural network, trained on the same inputs, does not meaningfully improve predictive performance. Among the predictors we consider, Genre has the largest impact on tickets sold, suggesting that audiences exhibit clear genre preferences when deciding what to watch. However, the overall low explanatory power of our models is consistent with prior work showing that box office performance also depends on factors we do not observe here, such as production budget, distribution scale, franchise status, star power, and word-of-mouth dynamics.
+Our main estimand is the expected number of tickets sold for a movie with given basic attributes. Let Y_i denote the number of tickets sold for film i, and let X_i be the set of features: genre, distributor, MPAA rating, release year, release month, and three indicators for whether the title contains the words “man”, “love”, or “life”. Our target is the regression function
+$$ m(x) = \mathbb{E}[\,Y_i \mid X_i = x\,]$$
+that is, the average ticket sales for all movies. The linear and neural network models we fit are different parametric approximations to this conditional expectation.
 
-Although our models are not accurate enough to be useful for practical forecasting, they highlight an important point for both researchers and practitioners: movie success cannot be captured by a handful of simple metadata fields. For investors, this underscores the value of obtaining richer information about a project—such as budget, marketing plans, and audience buzz—before making decisions. For future research, our findings motivate incorporating additional predictors (e.g., budgets, star metrics, review scores, social media indicators, and country-specific variables) and exploring more sophisticated modelling frameworks.
+Our results suggest that these simple variables are far from sufficient. Even after tuning, the linear regression model achieves an $R^2$ of only about 0.35, indicating that most of the variation in ticket sales remains unexplained. The neural network, trained on the same inputs, does not meaningfully improve predictive performance. Among the predictors we consider, Genre has the largest impact on tickets sold, suggesting that audiences exhibit clear genre preferences when deciding what to watch. Although our models are not accurate enough to be useful for practical forecasting, they highlight an important point for both researchers and practitioners: movie success cannot be captured by a handful of simple metadata fields. For investors, this underscores the value of obtaining richer information about a project—such as budget, marketing plans, and audience buzz—before making decisions. For future research, our findings motivate incorporating additional predictors, for example, budgets, star metrics, review scores, and country-specific variables, and exploring more sophisticated modelling frameworks.
 
 The remainder of this paper is structured as follows. Section 2 describes the dataset and the cleaning procedures. Section 3 presents our modelling approach and empirical results. Section 4 discusses the findings and limitations, and outlines directions for future work.
 
@@ -34,39 +37,35 @@ The remainder of this paper is structured as follows. Section 2 describes the da
 
 ## Overview
 
-We use the statistical programming language Python [@citePython] together with the data library Pandas [@citePandas] to clean and analyze our dataset. The data come from the Data and Story Library (DASL), an open-source repository of real-world datasets for teaching and practice. Our dataset contains 6 897 major films released between 2006 and 2015, with variables including title, genre, distributor, MPAA rating, release date, and gross revenue. 
-
-
-
-## Measurement
-	
-Some paragraphs about how we go from a phenomena in the world to an entry in the dataset.
+We use the statistical programming language Python [@citePython] together with the data library Pandas [@citePandas] to clean and analyze our dataset. The data come from the Data and Story Library (DASL), an open-source repository of real-world datasets for teaching and practice. Our dataset contains 6,897 major films released between 2006 and 2015, with variables including title, genre, distributor, MPAA rating, release date, and gross revenue. 
 
 ## Outcome variables
+Gross revenue is an aggregate measure that depends on realized attendance, ticket prices, and the length of theatrical run given in units of USD. The tickets_sold variable is an approximate count based on information provided by theatres and production company. Release dates are recorded as calendar dates and we transform them into release_year and release_month to capture broad timing effects such as releases during holidays. As gross revenue can be easily computed from the number of tickets sold, we will focus our analysis on the number of tickets sold. Since this value is numerial in nature, making Linear Regression a natrual choice for our model.
 
-Add graphs, tables and text. Use sub-sub-headings for each outcome variable or update the subheading to be singular.
+The number of tickets sold is highly skewed, with a small number of blockbusters selling millions of tickets, while many sell only a few thousand or less, making a large clump near zero when visualized in the original scale. The mean number of tickets sold is about 1.77 million, but the median is only 22,962, emphsizing that the average is pulled up by the outliers with many tickets sold. Because of this, standard deviation is also very large at 5.45 million, reflecting the wide variation in ticket sales across films. This may cause issues for our linear regression model, which assumes normally distributed errors.
 
+We can visualize the top movies with the most and least tickets sold in the following graphs.
 
+::: {#fig-top-bottom layout-ncol=2}
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
+![](images/top_10_sold.png)
 
-Talk more about it.
+![](images/last_10_sold.png)
 
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
+Ticket sales for the ten best- and worst-selling movies.
+:::
 
+Because of the clump near zero, we will work with log-transformed version of tickets sold, taken with log base 10. This transformation compresses the scale and reduces the influence of extreme values, making the distribution more symmetric and closer to normal. The mean of log_tickets_sold is about 7.38, the median is about 10.0, and the standard deviation is about 2.87. Althuogh we can still see that the transfored distribution is slightly bi-modal, suggesting a potential mixture distirbution. 
 
-Talk way more about it. 
+![Number of tickets sold on the log base 10 scale](images/tickets_sold_log.png){#fig-transformed-tickets-sold fig-align="center" width=60%}
+
 
 ## Predictor variables
+We consider the rest of the variables in the dataset, except gross revenue, as potential predictors for tickets sold. Genre is a categorical variable indicating the primary genre of the film, such as Action, Comedy, Drama, etc. We can see that the most popular genre in the past year were Distributor is also categorical, representing the company responsible for distributing the film to theatres. MPAA rating indicates the content rating assigned by the Motion Picture Association of America, such as G, PG, PG-13, R, etc. Release year and release month are numerical variables capturing when the film was released.
 
-Add graphs, tables and text.
+On top of these, we want to make use of the title of the movies by extracting features from them. We wonder if includig certain key words in the title would increase the chance of the movies being selected by potential audience, thereby increasing the number of tickets sold. So we extracted the most frequent words in appearing in movie titles, which are "man", "love", and "life", and created three indicator variables for each of them. That is, each of these three new variables takes value 1 if the corresponding word appears in the title, and 0 otherwise. These three new variables were aggregated to the dataset.
 
-Use sub-sub-headings for each outcome variable and feel free to combine a few into one if they go together naturally.
-
-
-
-
-
+Otherwise, the dataset was well-curated and no more cleaning were required. But it is worth noting that this is an observational dataset of commercially released films, measurement error may be present—for example in ticket count approximations or genre assignments—but we treat the recorded values as given.
 
 
 
