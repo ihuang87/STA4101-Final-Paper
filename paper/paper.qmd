@@ -20,15 +20,15 @@ format:
 
 # Introduction
 
-Movie theatres are a common destination for families and friends to gather, enjoy a visual adventure, and briefly escape from real life at a relatively low cost. Yet thousands of films are released worldwide each year, only few are remembered and or even watched by more than a few audience. What determines which movies audiences choose, and which titles succeed at the box office? Prior studies have examined determinants such as budget, distribution, sequels, star power, reviews, and word-of-mouth, and have used these variables to model or forecast revenues. Many studies used complicated models with many predictors to accompolish this task, but is there a way to model the same thing with minimal predictors and simple models? If so, we can make our decisions with much less cost, both in collecting data and performing analysis. In this project, we ask this restrictive question: how much of a movie’s box office can be explained using only very simple, easily available information?
+Movie theatres are a common destination for families and friends to gather, enjoy a visual adventure, and briefly escape from real life at a relatively low cost. Yet thousands of films are released worldwide each year, only few are remembered and or even watched by more than a few audience. What determines which movies audiences choose, and which titles succeed at the box office? Prior studies have examined determinants such as budget, distribution, sequels, star power, reviews, and word-of-mouth, and have used these variables to model or forecast revenues. Many studies used complicated models with many predictors to accompolish this task, but is there a way to model the same thing with minimal predictors and simple models? If so, we can make our decisions with much less cost, both in collecting data and performing analysis. In this project, we ask this restrictive question: how much of a movie’s box office can be explained using minimal and easily available information?
 
-To investigate this, we fit a linear regression model using only Genre, Distributor, MPAA rating, release date (year and month), and a few indicator variables capturing whether the movie title contains certain frequent words, to predict the number of tickets sold. We then use the linear model’s insights to build a shallow neural network and assess whether a more flexible model can substantially improve predictive accuracy using the same limited feature set. This allows us to test whether movie box office outcomes can be adequately captured by basic categorical attributes and coarse timing information alone.
+To investigate this, we fit a linear regression model using only Genre, Distributor, MPAA rating, release date (year and month), and a few indicator variables capturing whether the movie title contains certain frequent words, to predict the number of tickets sold. We then use a mixture model to test whether a more flexible model can substantially improve explanation of the variation using the same limited feature set. This allows us to test whether movie box office outcomes can be adequately captured by basic categorical attributes and coarse timing information alone.
 
 Our main estimand is the expected number of tickets sold for a movie with given basic attributes. Let Y_i denote the number of tickets sold for film i, and let X_i be the set of features: genre, distributor, MPAA rating, release year, release month, and three indicators for whether the title contains the words “man”, “love”, or “life”. Our target is the regression function
 $$ m(x) = \mathbb{E}[\,Y_i \mid X_i = x\,]$$
 that is, the average ticket sales for all movies. The linear and neural network models we fit are different parametric approximations to this conditional expectation.
 
-Our results suggest that these simple variables are far from sufficient. Even after tuning, the linear regression model achieves an $R^2$ of only about 0.35, indicating that most of the variation in ticket sales remains unexplained. The neural network, trained on the same inputs, does not meaningfully improve predictive performance. Among the predictors we consider, Genre has the largest impact on tickets sold, suggesting that audiences exhibit clear genre preferences when deciding what to watch. Although our models are not accurate enough to be useful for practical forecasting, they highlight an important point for both researchers and practitioners: movie success cannot be captured by a handful of simple metadata fields. For investors, this underscores the value of obtaining richer information about a project—such as budget, marketing plans, and audience buzz—before making decisions. For future research, our findings motivate incorporating additional predictors, for example, budgets, star metrics, review scores, and country-specific variables, and exploring more sophisticated modelling frameworks.
+Our results suggest that these simple variables are not necessarily sufficient. After tuning, we achieved an $R^2$ of about 0.68, indicating that there are still variation in ticket sales remains unexplained.  Among the predictors we consider, Genre has the largest impact on tickets sold, suggesting that audiences exhibit clear genre preferences when deciding what to watch. Although our models are not accurate enough to be useful for practical forecasting, they highlight an important point for both researchers and practitioners: movie success cannot be captured by a handful of simple metadata fields. For investors, this underscores the value of obtaining richer information about a project—such as budget, marketing plans, and audience buzz—before making decisions. For future research, our findings motivate incorporating additional predictors, for example, budgets, star metrics, review scores, and country-specific variables, and exploring more sophisticated modelling frameworks.
 
 The remainder of this paper is structured as follows. Section 2 describes the dataset and the cleaning procedures. Section 3 presents our modelling approach and empirical results. Section 4 discusses the findings and limitations, and outlines directions for future work.
 
@@ -57,11 +57,20 @@ Ticket sales for the ten best- and worst-selling movies.
 
 Because of the clump near zero, we will work with log-transformed version of tickets sold, taken with log base 10. This transformation compresses the scale and reduces the influence of extreme values, making the distribution more symmetric and closer to normal. The mean of log_tickets_sold is about 7.38, the median is about 10.0, and the standard deviation is about 2.87. Althuogh we can still see that the transfored distribution is slightly bi-modal, suggesting a potential mixture distirbution. 
 
-![Number of tickets sold on the log base 10 scale](images/tickets_sold_log.png){#fig-transformed-tickets-sold fig-align="center" width=60%}
+![Number of tickets sold on the log base 10 scale](images/tickets_sold_log.png){#fig-transformed-tickets-sold fig-align="center" width=50%}
 
 
 ## Predictor variables
-We consider the rest of the variables in the dataset, except gross revenue, as potential predictors for tickets sold. Genre is a categorical variable indicating the primary genre of the film, such as Action, Comedy, Drama, etc. We can see that the most popular genre in the past year were Distributor is also categorical, representing the company responsible for distributing the film to theatres. MPAA rating indicates the content rating assigned by the Motion Picture Association of America, such as G, PG, PG-13, R, etc. Release year and release month are numerical variables capturing when the film was released.
+We consider the rest of the variables in the dataset, except gross revenue, as potential predictors for tickets sold. Genre is a categorical variable indicating the primary genre of the film, such as Action, Comedy, Drama, etc. We can see that the most popular genre in the past year were comedy and adventure, though the most produced genre was Drama (see Figure. 3) Distributor is also categorical, representing the company responsible for distributing the film to theatres. Most movies in the years of 2006 to 2015 were produced by IFC and Warner Bros, at a count of around 300 films. MPAA rating indicates the content rating assigned by the Motion Picture Association of America, such as G, PG, PG-13, R. Release year and release month are numerical variables capturing when the film was released.
+
+::: {#fig-top-bottom layout-ncol=2}
+
+![](images/best_genre.png)
+
+![](images/movies_of_genre.png)
+
+The best selling genres and most produced genres of movies.
+:::
 
 On top of these, we want to make use of the title of the movies by extracting features from them. We wonder if includig certain key words in the title would increase the chance of the movies being selected by potential audience, thereby increasing the number of tickets sold. So we extracted the most frequent words in appearing in movie titles, which are "man", "love", and "life", and created three indicator variables for each of them. That is, each of these three new variables takes value 1 if the corresponding word appears in the title, and 0 otherwise. These three new variables were aggregated to the dataset.
 
@@ -70,64 +79,133 @@ Otherwise, the dataset was well-curated and no more cleaning were required. But 
 
 
 # Model
-
-The goal of our modelling strategy is twofold. Firstly,...
-
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
+As discussed earlier, we hope to explain movie's box office with minimal information and simple models, and see how much of movies' box office can be explain this way. As seen from our exploratory data analysis, we see that it is reasonable to model a log-transformed version of the number of tickets sold using Linear Regression. And based the bi-modal exploration, we will also consider fitting a mixture model to see if results can be improves. Lastly, we experiment with a shallow neural network to see if a more flexible model can improve performance using the same limited feature set.
 
 ## Model set-up
+We fit a total of three models in this project: a linear regression model, a mixture of two linear regression models, and a shallow neural network.
 
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
+## Linear regression model
+To estimate the regression function $m(x)$ we first fit Linear Regression model for the logged tickets sold using Ordinary Least Square Estimators. For each movie $i \in \{1,\dots,n \}$, let
 
-\begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
-\end{align}
+- $Y_i$ be logged number of tickets sold,
+- $x_{i,\text{year}}$ and $x_{i,\text{month}}$ be release year and month of the movie,
+- $G_i$, $D_i$, and $M_i$ denote the categorical variables Genre, Distributor, and MPAA rating,
+- $z_{i,\text{man}}, z_{i,\text{love}}, z_{i,\text{life}} \in \{0,1\}$ be the three title indicators.
 
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
+Then the full linear model can then be written as
+$$
+\begin{aligned}
+Y_i &= \beta_0 + \beta_{1} x_{i,\text{year}} + \beta_{1} x_{i,\text{month}}\\
+    &+ \sum_{g} \gamma_g \,\mathbb{1}\{G_i = g\} + \sum_{d} \delta_d \,\mathbb{1}\{D_i = d\}
++ \sum_{m} \eta_m \,\mathbb{1}\{M_i = m\}\\
+    &+ \alpha_{\text{man}} z_{i,\text{man}} + \alpha_{\text{love}} z_{i,\text{love}} + \alpha_{\text{life}} z_{i,\text{life}} + \varepsilon_i
+\end{aligned}
+$$
+We implement this model in Python using `statsmodels`.
+So we model the logged number of tickets sold for each movies as a linear function all the predictors discussed earlier. Linear Rregression makes several assumptions, including linearity, independence, homoscedasticity, and normality of errors and these assumptions are roughly satisfied in our case.
+
+## Mixture Regression Models
+We also consider a finite mixture and linear regression for $Y_i$ with the same predictors that we previously considered.
+Let $Z_i \in \{1,2\}$ be an unobserved component indicator such that
+$$
+\Pr(Z_i = k) = \pi_k, \qquad k = 1,2,
+$$
+with $\pi_k > 0$ and $\pi_1 + \pi_2 = 1$.
+Conditional on $Z_i = k$ we assume a standard linear regression model
+$$
+Y_i \mid (Z_i = k, \mathbf{X}_i) \sim
+\mathcal{N}\!\big(\mathbf{X}_i^\top \boldsymbol{\beta}_k, \, \sigma_k^2\big),
+\qquad k = 1,2,
+$$
+where $\boldsymbol{\beta}_k$ is the vector of regression coefficients
+and $\sigma_k^2$ is the error variance for component $k$.
+
+Marginally, the conditional density of $Y_i$ given $\mathbf{X}_i$ is
+$$
+f(y_i \mid \mathbf{X}_i, \boldsymbol{\theta})
+= \sum_{k=1}^{2} \pi_k \,
+  \phi\!\big(y_i \mid \mathbf{X}_i^\top \boldsymbol{\beta}_k, \sigma_k^2\big),
+$$
+where $\boldsymbol{\theta} = (\pi_1,\pi_2,\boldsymbol{\beta}_1,\boldsymbol{\beta}_2, \sigma_1^2,\sigma_2^2)$ and $\phi(\cdot \mid \mu,\sigma^2)$ denotes the univariate Normal distribution.
+The observed-data likelihood for $\boldsymbol{\theta}$ is therefore
+$$
+L(\boldsymbol{\theta} \mid \{y_i,\mathbf{X}_i\}_{i=1}^n)
+= \prod_{i=1}^{n}
+  \left\{
+    \sum_{k=1}^{2} \pi_k \,
+    \phi\!\big(y_i \mid \mathbf{X}_i^\top \boldsymbol{\beta}_k, \sigma_k^2\big)
+  \right\},
+$$
+and can be maximised using an expectation–maximization (EM) algorithm which is built in to the gmm model in statsmodels.
 
 
-### Model justification
 
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
+## Model justification
+As we have discussed earlier, our response variable is numerical in nature, making linear regression a natural choice. Linear regression comes with four assumptions, linearity, uncorrelated errors, homoscedasticity, and normality assumptions. In our exploratory data analysis, we saw that after the log transformation, our response variable is roughly normal, satisfying the normality assumption. And since we are not in particular interested in the effect of each predictor, violation of normality assumption would not be too problematic in our case. There were no clear patterns in the residuals plots and the span of residuals remains similar throughout, suggesting that the linearity and homoscedasticity assumption are also roughly satisfied. However, there might be correlation issues among the predictors as we used many indicator predictors for categorical variables with many levels, such as Genre and Distributor. This might cause some instability in our coefficient estimates, but since we are more interested in overall model performance rather than individual coefficients, this is not a major concern.
 
-We can use maths by including latex between dollar signs, for instance $\theta$.
+On the other hand, the bi-modal distribution of the response variable after log transformation suggests that the population may consist of two groups, leading to the use of mixture models. Therefore, it was also reasonable to fit a separate linear regression model after separating each group with GMM.
 
 
 # Results
+The linear regression on the log scale achieves an in-sample $R^2$ of about $0.68$ and a root mean squared error (RMSE) of approximately $0.82$ in log${10}$ units. An RMSE of $0.82$ on the log$_{10}$ scale corresponds to prediction errors on the order of a factor of about $6$ in the original ticket counts, so while the model explains substantially more variation than the unlogged version (which had $R^2 \approx 0.35$), there is still considerable unexplained heterogeneity in box office performance.
 
-Our results are summarized in @tbl-modelresults.
+The regression coefficients confirm that distributor and genre are among the strongest predictors of log ticket sales. Large studio distributors such as Walt Disney, Universal, 20th Century Fox, Sony Pictures and Warner Bros. are associated with substantially higher log ticket sales than the baseline distributors, while many smaller or niche distributors are associated with lower expected ticket sales. This matches with the expectation that audience would tend to select movies distirbuted by famous componnies. Among genres, adventure and action movies have positive effects on log ticket sales relative to the reference genre, whereas documentary and some drama categories are associated with lower ticket sales. MPAA ratings also show a clear pattern: PG-13 and PG movies tend to have higher log ticket sales than the baseline rating, while Not Rated and G titles are associated with lower sales. Though since most of the movies in the dataset were Not Rated, this could be a result of unequal representation. The simple title indicators (whether the title includes “man”, “love”, or “life”) have small coefficients and do not materially change model fit. Overall, after log transformation, the model captures broad patterns in how basic attributes relate to demand, but the remaining residual variation indicates that important drivers such as budget, marketing, franchise status and word-of-mouth are missing from this specification.
 
 
+| Predictor                     | Estimate | Std Error | p-value |
+| ----------------------------- | -------: | ---------: | ------: |
+| Genre = Adventure             | 0.097  |  0.072      |  0.178 |
+| Distributor = 20th Century Fox |   2.835 |     0.862     | 5.9e-09 |
+| MPAA = T.PG-13               |    0.395 |      0.092 | 1.7e-05 |
+| Genre = Documentary       |   -0.233 |      0.061  |   0.000 |
+| T.Universal    |    3.062 |      0.862  |  0.000 |
 
+
+In terms of the mixture regression, we fit a two-component Gaussian mixture model to the log-transformed ticket sales to split the data into two groups, as suggested by the bimodality of response.  yielding a “low–box-office” group (component 1, $n = 4{,}484$) and a “high–box-office” group (component 0, $n = 2{,}196$). We then fit separate linear regression models for each group, using the same set of predictors as the model above.
+
+However, when we then fit two separate regression models on the two components (the high and low box office groups) identified by the mixture model, the overall $R^2$ for each component dropped to 0.38 and 0.52 respectively. This might be a result of the drop in data size after splitting into two components, leading to less stable estimates. Overall, the mixture model did not substantially improve our ability to explain variation in ticket sales using the limited feature set. Nonetheless, we discovered some similar patterns like action and adventure–type genres and major studio distributors are associated with higher log ticket sales, while more niche genres and non-major distributors tend to be associated with lower sales, conditional on the other covariates.
+
+High Box Office Group (Component 0):
+
+| Predictor                            | Estimate | Std Error | p value |
+| ------------------------------------ | -------- | --------- |--------|
+| Distributor = Sony Pictures Classics | -0.859   |0.062      |  0.000 |
+| Distributor = Roadside Attractions   | -0.8956  | 0.094     |  0.000 |
+| Distributor = Paramount Pictures     | 0.0453   | 0.053     |  0.393 |
+| MPAA = PG                            | 0.154    |  0.065    |  0.018 |
+| Genre = Drama                        | -0.3106  | 0.040     |  0.000 |
+
+Low Box Office Group Coefficients(Component 1):
+
+| Predictor        | Estimate | Std Error |  p value |
+| ---------------- | -------- | --------- | --------|
+| Distributor = 20th Century Fox |0.6007  |   0.707  |      0.396|
+| Genre =  Adventure | 0.1209 | 0.101 | 0.232  |
+| MPAA = Not Rated |-0.3786  | 0.120  |-  0.002|
+| Distributor = Walt Disney |0.5205 | 0.705 | 0.460|
+| Genre = Drama | 0.1609  |  0.066   |   0.015|
 
 
 # Discussion
 
-## First discussion point {#sec-first-point}
+## Summary of analysis
+This report answers the question of how much of a movie’s box office performance can be explained using simplistic model and easily obtained data. We explored the dataset containing 6,897 major releases from 2006–2015, and based on the exploratory data analysis, we decided that a linear regression model would be be an appropriate simple model for modelling number of tickets sold. We modeled log-transformed ticket sales as a function of release year and month, distributor, genre, MPAA rating, and a small set of title indicators. After the first simple model, based on the observation that our response variable was bi-modal, we fit a two-component Gaussian mixture model to the log-tickets to identify the two potential underlying groups. Regression model was then fit to each compoenent to see whether relationships between predictors and outcomes differ in the low- and high-grossing segments and whether explanatory power of the model can be improved by grouping.
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+## key Findings
+We discovered that we are able to explain a moderate amount of variation in box office performance using only basic metadata. The linear regression on the log scale attains an $R^2$ of 0.68, which was non-trivial. It can be used as a proxy for understanding broad patterns in what movie attributes contribute to the its box office performance, when computation power is limited or precise outcomes were not required. Indeed, we were able to learn from our simple models that films released by large studio distributors and in commericial genres like advanture movies systematically sell more tickets than those from smaller distributors and narrower genres. People tend to favour movies that are relatively shallow, compared to genres like documentary and drama, which are associated with lower sales. This confirms the intuitive idea that institutional backing and genre positioning matter for commercial success, and the effect is visible even when we restrict attention to a small set of coarse variables. Although we initially believe that audience could be attracted to movies with certain key words in the title, our results show that these title indicators have minimal effects on ticket sales. So we are able to make some useful inferences about movie box office performance using only minimal information and simple models.
 
-## Second discussion point
+Moreover, the mixture analysis shows that the movie market can be effectively partitioned into at least two groups: a large group of low- to moderate-grossing films and a smaller group of high-grossing films. The two-component Gaussian mixture on fits substantially better than a single Normal distribution, with one component centered around a few thousand tickets and another around millions of tickets. When we fit separate regressions within these groups, we see that basic metadata are more informative among films that have high box office, compared to those with lower ticket sales. The high group regression has higher $R^2$ and cleaner, more stable effects for distributors and genres, while the low group shows weaker fits and more residual variability. This suggests that once a film reaches the commercial “upper tier”, its performance is more systematically tied to structural choices like genre and distribution, whereas performance in the lower tier is more idiosyncratic and less predictable from simple attributes. This also suggests that future work could build on mixture frameworks to better capture the characteristics of different movies, thereby better explaining and predicting box office outcomes.
 
-Please don't use these as sub-heading labels - change them to be what your point actually is.
+## Limitations and future work
+However, it is important to recognize that there are several important limitations in our analysis. Substantively, the dataset is observational and restricted to major movies released from 2006 to 2015. This is ten years from now and trends in audience preference could change, the market could become more volatile and harder to explain with simple features and models. Being restricted to major movies would impact the generalization to smaller independent releases. Measurement could be imperfect in the dataset as assignments of genre and MPAA could be coarse and merging heterogeneous content. Methodologically, our models had issues in mutlicollinearity due to the large number of dummy variables for categorical predictors with many levels, which could lead to unstable coefficient estimates. Linearity assumption does not hold perfectly despite the transformation of the response variable, potentially leading to biased coefficients. We also did not consider interaction effects between predictors, due to the already existing multi-collinearity which we did not want to exacerbate. Finally, the mixture regressions rely on hard assignment of movies to latent components and do not carry mixture uncertainty into the regression stage, which could lead to unwanted bias.
 
-## Third discussion point
-
-## Weaknesses and next steps
-
-Weaknesses and next steps should also be included.
+The analysis here is a first step rather than a complete model of box office performance. If we wish to continue down this path of using minimal information and simple models, we would need to develop methods that can better extract signals from limited data. This is an active researsch area and there are many potential directions. But if we just want to improve box office explanation and prediction more generally, richer data and more sophisticated models would be helpful. Future work can extend the feature set by incorporating production budgets, sequel and franchise indicators, star metrics, and measures of pre- and post-release attention such as critic scores, online ratings and social media activity. With richer covariates, it would be natural to compare regularised linear models, tree-based methods and hierarchical models that allow distributor and genre effects to vary across time or markets. On the mixture side, a more formal finite mixture of regressions—where both component membership and regression parameters are estimated jointly—would provide a principled framework for studying regime-specific relationships, at the cost of more complex computation. Finally, a deeper treatment of selection and measurement would clarify how much of the remaining unexplained variation is due to genuinely unobserved drivers versus noise in the observed data.
 
 \newpage
 
 \appendix
 
 # Appendix {-}
-
 
 # Additional data details
 
