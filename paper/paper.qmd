@@ -208,21 +208,130 @@ The analysis here is a first step rather than a complete model of box office per
 # Appendix {-}
 
 # Additional data details
+Here are a few additional plots to further illutrate the data.
+
+::: {#fig-top-bottom layout-ncol=2}
+
+![](images/best_genre.png)
+
+![](images/movies_of_genre.png)
+
+The best selling genres and most produced genres of movies.
+:::
 
 # Model details {#sec-model-details}
+On top of the two models considered in the main text, we also consider the following two specifications as part of exploration. \subsection*{Ordinary linear regression on raw ticket sales}
 
-## Posterior predictive check
+Let $i = 1,\dots,n$ index movies and define the outcome as the number of
+tickets sold,
+$$
+Y_i = \text{Tickets.Sold}_i.
+$$
+For each movie $i$, we observe:
 
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
+\begin{itemize}
+  \item $\text{Year}_i$: release year,
+  \item $\text{Month}_i$: release month $(1,\dots,12)$,
+  \item $G_i$: genre (categorical),
+  \item $D_i$: distributor (categorical),
+  \item $M_i$: MPAA rating (categorical),
+  \item $z_{i,\text{man}}, z_{i,\text{love}}, z_{i,\text{life}} \in \{0,1\}$:
+        indicator variables for whether the title contains the words
+        ``man'', ``love'', or ``life''.
+\end{itemize}
 
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
+We treat $G_i$, $D_i$, and $M_i$ as categorical variables and represent
+them with dummy variables. The linear regression model on the original
+ticket scale is
+\begin{align*}
+Y_i
+&= \beta_0
+ + \beta_{\text{year}} \,\text{Year}_i
+ + \beta_{\text{month}} \,\text{Month}_i \\
+&\quad
+ + \sum_{g} \gamma_g \,\mathbb{1}\{G_i = g\}
+ + \sum_{d} \delta_d \,\mathbb{1}\{D_i = d\}
+ + \sum_{m} \eta_m \,\mathbb{1}\{M_i = m\} \\
+&\quad
+ + \alpha_{\text{man}} z_{i,\text{man}}
+ + \alpha_{\text{love}} z_{i,\text{love}}
+ + \alpha_{\text{life}} z_{i,\text{life}}
+ + \varepsilon_i,
+\end{align*}
+where one level of each factor (genre, distributor, MPAA) is taken as
+the reference category, and the error terms satisfy
+$$
+\varepsilon_i \sim \mathcal{N}(0,\sigma^2),
+\qquad i=1,\dots,n.
+$$
+The parameter vector
+$(\beta_0, \beta_{\text{year}}, \beta_{\text{month}},
+ \{\gamma_g\}_g,\{\delta_d\}_d,\{\eta_m\}_m,
+ \alpha_{\text{man}},\alpha_{\text{love}},\alpha_{\text{life}})$
+is estimated by ordinary least squares, i.e.\ by minimizing the sum of
+squared residuals
+$$
+\sum_{i=1}^n \bigl(Y_i - \hat{Y}_i\bigr)^2.
+$$
+
+
+\subsection*{Lasso regression on log-transformed ticket sales}
+
+For the penalised model, we work with a log-transformed outcome
+$$Y_i = \log_{10}\bigl(\text{Tickets.Sold}_i\bigr)$$
+using the same underlying predictors (release year, release month,
+distributor, genre, MPAA rating, and title indicators).
+
+Let $\mathbf{x}_i \in \mathbb{R}^p$ denote the design vector for movie
+$i$ after preprocessing, where:
+
+\begin{itemize}
+  \item continuous predictors (such as year and month, and the binary
+        title indicators) have been centered and scaled, and
+  \item categorical predictors (distributor, genre, MPAA) have been
+        expanded into dummy variables via one-hot encoding, with one
+        reference level dropped for each factor.
+\end{itemize}
+
+The Lasso model assumes the linear relationship
+
+$$
+Y_i = \mathbf{x}_i^\top \boldsymbol{\beta} + \varepsilon_i,
+\qquad i=1,\dots,n,
+$$
+with mean-zero errors $\varepsilon_i$, but estimates
+$\boldsymbol{\beta} \in \mathbb{R}^p$ by solving the penalised least
+squares problem
+$$
+\hat{\boldsymbol{\beta}}_{\lambda}
+= \arg\min_{\boldsymbol{\beta}}
+\left\{
+  \frac{1}{2n}\sum_{i=1}^n
+  \bigl(Y_i - \mathbf{x}_i^\top \boldsymbol{\beta}\bigr)^2
+  + \lambda \sum_{j=1}^p |\beta_j|
+\right\},
+$$
+
+where $\lambda \ge 0$ is a tuning parameter controlling the strength of
+the $\ell_1$ penalty. The penalty is applied to the slope coefficients
+$\beta_j$ (the intercept is left unpenalised or absorbed by centering).
+In practice, we select $\lambda$ by $K$-fold cross-validation and use
+$\hat{\boldsymbol{\beta}}_{\hat{\lambda}}$ as the final model. The
+$\ell_1$ penalty both shrinks coefficients toward zero and sets many
+exactly to zero, performing variable selection and mitigating the impact
+of multicollinearity among the large set of dummy variables.
 
 
 ## Diagnostics
+::: {#fig-top-bottom layout-ncol=2}
 
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
+![](images/residuals_reg.png)
 
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
+![](images/qq_reg.png)
+
+Diagnostic plots for linear regression model residuals. As mentioned in main text, there seems to be
+:::
+
 
 
 
