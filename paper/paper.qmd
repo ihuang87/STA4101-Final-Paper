@@ -6,7 +6,7 @@ author:
 
 date: today
 date-format: long
-abstract: "Movie box office performance is a central topic in both industry and academic research, as it guides investment decisions, marketing strategies, and our understanding of audience behavior. We investigate to what extent simple movie attributes can explain box office outcomes. Using a dataset of 6897 films released between 2006 and 2015, we fit linear regression and shallow neural network models to predict tickets sold from only genre, distributor, MPAA rating, release timing, and a few title-based indicators. Even after tuning, our best linear model attains an $R^2$ of about 0.35 and the neural network does not substantially improve this, indicating that basic metadata alone are insufficient for accurate box office prediction and that richer information such as budget, marketing, franchise status, and word-of-mouth is likely essential."
+abstract: "Movie box office performance is a central topic in both industry and academic research, as it guides investment decisions, marketing strategies, and our understanding of audience behavior. We investigate to what extent simple movie attributes can explain box office outcomes. Using a dataset of 6897 films released between 2006 and 2015, we fit linear regression and a mixture model regression in attempts to explain movie box office from only genre, distributor, MPAA rating, release timing, and a few title-based indicators. Our best model attains an $R^2$ of 0.68 indicating that basic metadata alone are capable of capturing a majority of the variation in the data, though insufficient for accurate box office explanation and that richer information such as budget, marketing, franchise status, and word-of-mouth is likely essential."
 
 format: 
     pdf:
@@ -14,10 +14,9 @@ format:
         number-sections: true
         fig-align: center
 
-# bibliography: references.bib
+bibliography: references.bib
 ---
-
-
+\newpage
 # Introduction
 
 Movie theatres are a common destination for families and friends to gather, enjoy a visual adventure, and briefly escape from real life at a relatively low cost. Yet thousands of films are released worldwide each year, only few are remembered and or even watched by more than a few audience. What determines which movies audiences choose, and which titles succeed at the box office? Prior studies have examined determinants such as budget, distribution, sequels, star power, reviews, and word-of-mouth, and have used these variables to model or forecast revenues. Many studies used complicated models with many predictors to accompolish this task, but is there a way to model the same thing with minimal predictors and simple models? If so, we can make our decisions with much less cost, both in collecting data and performing analysis. In this project, we ask this restrictive question: how much of a movie’s box office can be explained using minimal and easily available information?
@@ -212,11 +211,11 @@ Here are a few additional plots to further illutrate the data.
 
 ::: {#fig-top-bottom layout-ncol=2}
 
-![](images/best_genre.png)
+![](images/dist_with_most_movies.png)
 
-![](images/movies_of_genre.png)
+![](images/age_restriction.png)
 
-The best selling genres and most produced genres of movies.
+Distributors with the most movies and MPAA age restrictions overview of movies contained in the dataset.
 :::
 
 # Model details {#sec-model-details}
@@ -333,10 +332,8 @@ Diagnostic plots for linear regression model residuals. As mentioned in main tex
 :::
 
 
-
-
-
 \newpage
 
 
 # References
+We use Python and several open-source packages for our analysis [@python; @harris2020numpy; @mckinney2010pandas; @pedregosa2011scikit; @seabold2010statsmodels]
