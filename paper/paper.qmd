@@ -1,12 +1,12 @@
 ---
 title: "Explaining Box Office with Minimal Information"
-subtitle: "Can a Movie’s Success Be Explained with Only Basic Metadata?"
+subtitle: "Can a Movie’s Success Be Explained by Basic Metadata?"
 author: 
   - Isabelle Huang
 
 date: today
 date-format: long
-abstract: "Movie box office performance is a central topic in both industry and academic research, as it guides investment decisions, marketing strategies, and our understanding of audience behavior. We investigate to what extent simple movie attributes can explain box office outcomes. Using a dataset of 6897 films released between 2006 and 2015, we fit linear regression and a mixture model regression in attempts to explain movie box office from only genre, distributor, MPAA rating, release timing, and a few title-based indicators. Our best model attains an $R^2$ of 0.68 indicating that basic metadata alone are capable of capturing a majority of the variation in the data, though insufficient for accurate box office explanation and that richer information such as budget, marketing, franchise status, and word-of-mouth is likely essential."
+abstract: "Movie box office performance is an important topic in both industry and academic research, informing investment decisions, marketing strategy, and our understanding of audience behaviour. This study examines how well simple movie attributes can explain box office outcomes without relying on complex models. Using a dataset of 6,897 films released between 2006 and 2015, we fit linear regression and mixture-of-regressions models to explain box office performance using only genre, distributor, MPAA rating, release time, and a small set of title-based indicators. Our best model achieves an $R^2$ of 0.68, suggesting that basic metadata captures much of the variation in the data but is not sufficient for accurate explanation. Richer information such as budget, marketing, franchise status, and word-of-mouth effects is likely essential for more accurate analysis."
 
 format: 
     pdf:
