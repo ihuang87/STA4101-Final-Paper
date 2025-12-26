@@ -6,7 +6,7 @@ author:
 
 date: today
 date-format: long
-abstract: "Movie box office performance is an important topic in both industry and academic research, informing investment decisions, marketing strategy, and our understanding of audience behaviour. This study examines how well simple movie attributes can explain box office outcomes without relying on complex models. Using a dataset of 6,897 films released between 2006 and 2015, we fit linear regression and mixture-of-regressions models to explain box office performance using only genre, distributor, MPAA rating, release time, and a small set of title-based indicators. Our best model achieves an $R^2$ of 0.68, suggesting that basic metadata captures much of the variation in the data but is not sufficient for accurate explanation. Richer information such as budget, marketing, franchise status, and word-of-mouth effects is likely essential for more accurate analysis."
+abstract: "Movie box office performance is an important topic in both industry and academic research, informing investment decisions, marketing strategy, and our understanding of audience behaviour. This study examines how well simple movie attributes can explain box office outcomes without relying on complex models. Using a dataset of 6,897 films released between 2006 and 2015, we fit linear regression and mixture-of-regressions models to explain box office performance using only genre, distributor, MPAA rating, release time, and a small set of title-based indicators. Our best model achieves an $R^2$ of 0.68, suggesting that basic metadata captures much of the variation in the data, but is not sufficient for accurate explanation. Richer information such as budget, marketing and star effects is likely essential for more accurate analysis."
 
 format: 
     pdf:
@@ -20,14 +20,14 @@ bibliography: references.bib
 \newpage
 # Introduction
 
-Movie theatres are a common destination for families and friends to gather and briefly escape from daily life at a relatively low cost. Yet thousands of films are released worldwide each year, and only a small fraction are widely watched or remembered. What determines which movies audiences choose? Prior work has studied determinants such as budget, sequels, star power, and reviews, and has used these variables to model or forecast revenue [@Hao2023FactorsFilmRevenue], [@Scott2019ReturnRegressions]. Many studies also apply machine learning methods to improve predictive performance [@JangeZarateAragonEncarnacion2025SystematicReviewBoxOffice]. This raises a natural question: how much of a movie’s box office can be explained using only easily available information and simple models? If strong performance is possible with minimal predictors, decisions could be made at lower cost, both in data collection and in analysis. In this project, we investigate the explanatory power of basic movie metadata under simple regression models.
+Movie theatres are a common destination for families and friends to gather and briefly escape from daily life at a relatively low cost. Yet thousands of films are released worldwide each year, and only a small fraction are widely watched and remembered. What determines which movies audiences choose? Prior work by @Hao2023FactorsFilmRevenue and @Scott2019ReturnRegressions and has studied determinants such as budget, sequels, star power, and reviews, and has used these variables to model or forecast revenue. Many studies also apply machine learning methods to improve predictive performance [@zarateforecasting2025]. This raises a natural question: how much of a movie’s box office can be explained using only easily available information and simple models? If strong performance is possible with minimal predictors, decisions could be made at lower cost, both in data collection and analysis. In this project, we investigate the explanatory power of basic movie metadata under simple regression models.
 
 We first fit a linear regression model to explain ticket sales using only genre, distributor, MPAA rating, release year and month, and a small set of indicator variables capturing whether the title contains certain frequent words. We then fit a mixture-of-regressions model to test whether a more flexible specification can substantially improve fit using the same limited feature set. Our main estimand is the log expected number of tickets sold for a movie with given basic attributes. Let $Y_i$ denote the log number of tickets sold for film $i$, and let $X_i$ denote its features. The target regression function is
 $$ m(x) = \mathbb{E}[\,Y_i \mid X_i = x\,]$$
 
 Overall, these simple variables explain box office outcomes to a meaningful extent, though not necessarily sufficient. After tuning, our best model achieves an $R^2$ of approximately 0.68, leaving roughly one-third of the variation in ticket sales unexplained. Among the predictors considered, genre has the strongest association with ticket sales, while title-based indicators contribute the least. Although the resulting models are not accurate enough for practical forecasting, they may serve as useful baselines and as intermediate proxies when richer covariates are unavailable. Future work could either extract more signal from limited data or incorporate additional predictors to capture more complex drivers of performance.
 
-The remainder of this paper is organized as follows. @sec-data describes the dataset and cleaning procedures. @sec-model presents the modeling approach and @sec-results describes empirical results. @sec-discussion discusses findings and limitations and outlines directions for future work.
+The remainder of this paper is organized as follows. @sec-data describes the dataset and cleaning procedures. @sec-model presents the modeling approach and @sec-results describes the results from these models. Lastly, @sec-discussion discusses findings and limitations and outlines directions for future work.
 
 
 # Data {#sec-data}
@@ -35,14 +35,14 @@ The remainder of this paper is organized as follows. @sec-data describes the dat
 ## Overview
 
 
-We use the statistical programming language Python [@PythonSoftwareFoundationPython] together with the data library Pandas [@pandas-dev-pandas-2025] to clean and analyze our dataset. The data come from the Data and Story Library [@dasl_movies], an open-source repository of real-world datasets for teaching and practice. Our dataset contains 6,897 major films released between 2006 and 2015, with variables including title, genre, distributor, MPAA rating, release date, and gross revenue. 
+We use the statistical programming language Python [@PythonSoftwareFoundationPython] together with the data library Pandas [@pandas-dev-pandas-2025] to clean and analyze our dataset. The data is obtained from the Data and Story Library [@dasl_movies], an open-source repository of real-world datasets for teaching and practice. Our dataset contains 6,897 major films released between 2006 and 2015, with variables including title, genre, distributor, MPAA rating, release date, and gross revenue. 
 
 ## Outcome Variables
 There are two variables in the dataset that measure box office performance: gross revenue and the number of tickets sold. Gross revenue is an aggregate outcome that depends on realized attendance, ticket prices, and the length of the theatrical run, reported in USD. The number of tickets sold is an approximate count based on information provided by theatres and production companies. Because gross revenue can be derived from ticket sales, we focus our analysis on the number of tickets sold. Since this response is numeric, linear regression is a natural starting point.
 
-However, ticket sales are highly right-skewed: a small number of blockbusters sell millions of tickets, while many films sell only a few thousand or fewer. The mean number of tickets sold is about 1.77 million, but the median is only 22,962, indicating that the mean is heavily influenced by a small set of extreme values. Consistent with this, the standard deviation is large at 5.45 million, reflecting substantial dispersion in ticket sales across films.
+However, ticket sales are highly right-skewed with a small number of blockbusters sell millions of tickets, while many films sell only a few thousand or fewer. The average number of tickets sold is about 1.77 million, though the median is only 22,962, indicating that the mean is heavily influenced by outliers. Consistent with this, the standard deviation is large at 5.45 million, reflecting substantial dispersion in ticket sales across films.
 
-We visualize films with the highest and lowest ticket sales in the following graphs.
+This huge discrepancy can be visualized from the top and worst-selling movies as plotted below.
 
 ::: {#fig-top-bottom layout-ncol=2}
 
@@ -53,7 +53,11 @@ We visualize films with the highest and lowest ticket sales in the following gra
 Ticket sales for the ten best- and worst-selling movies.
 :::
 
-Because of the strong clustering near zero, we work with a base-10 log transformation of tickets sold instead. This compresses the scale and reduces the influence of extreme values, producing a distribution that is more symmetric and closer to normal. The mean of log tickets sold is about 6.8, the median is about , and the standard deviation is about 2.87. The transformed distribution is still slightly bimodal, with one peak around 4 and another around 7.
+Moreover, the overall distribution of tickets sold shows that most movies cluster near zero, which is unlikely to satisfy the assumptions of linear regression. We therefore apply a base-10 log transformation to compress the scale and reduce the influence of extreme values, yielding a distribution that is more symmetric and closer to normal.
+
+After transformation, the distribution appears bimodal, with one peak around 4 and another around 7. The mean and median are also closer than before (mean ≈ 4.36; median ≈ 4.57). The standard deviation (≈ 1.42) indicates reduced dispersion in the transformed data.
+
+This bimodality was also reported by @Pan_2010 for gross income, which is proportional to tickets sold. They suggest it may arise from the number of theaters showing a film: most movies are released either in fewer than 100 theaters or in a few thousand. Films shown in thousands of theaters are more likely to generate audience attention and attract more viewers, leading to higher ticket sales. Films shown in relatively few theaters do not benefit from this effect and tend to sell fewer tickets. Over time, this mechanism can separate films into two groups.
 
 ![Number of tickets sold on the log base 10 scale](images/tickets_sold_log.png){#fig-transformed-tickets-sold fig-align="center" width=50%}
 
