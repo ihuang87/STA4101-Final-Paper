@@ -146,6 +146,8 @@ On the other hand, the bimodal shape of the log-transformed response suggests th
 # Results {#sec-results}
 The linear regression on the log scale achieves an in-sample $R^2$ of about $0.68$ and a root mean squared error (RMSE) of approximately $0.82$ in log${10}$ units. Thus, while the model explains substantially more variation than the unlogged version (which had $R^2 \approx 0.35$), there is still considerable unexplained heterogeneity in box office performance.
 
+![Linear regression line on the observed data](images/obs_fitted_values.png){#fig-obs-fitted fig-align="center" width=50%}
+
 The coefficient estimates suggest that distributor and genre are among the strongest predictors of log ticket sales. Large studio distributors such as Walt Disney, Universal, 20th Century Fox, and Warner Bros. are associated with substantially higher expected log ticket sales than the baseline distributor, conditional on the other covariates. Many smaller distributors, in contrast, are associated with lower expected sales, consistent with the idea that well-known distributors have greater reach and marketing capacity. Across genres, Adventure and Action are associated with higher ticket sales relative to the reference genre, whereas Documentary and Drama are associated with lower sales. MPAA ratings also show a pattern that PG and PG-13 films tend to have higher expected ticket sales than the baseline rating, while Not Rated and G films are associated with lower sales. However, since the majority of films in the dataset are Not Rated, this estimate may be a result of differences in representation across rating categories rather than an actual effect. Finally, the simple title indicators (whether the title contains “man”, “love”, or “life”) have small coefficients and do not materially improve model fit.
 
 Overall, the log-transformed model captures broad, interpretable associations between basic metadata and demand.
@@ -161,6 +163,9 @@ Overall, the log-transformed model captures broad, interpretable associations be
 
 
 In terms of the mixture regression, we fit a two-component Gaussian mixture model to the log-transformed ticket sales to split the data into two groups, as suggested by the bimodality of response.  yielding a “low–box-office” group (component 1, $n = 4{,}484$) and a “high–box-office” group (component 0, $n = 2{,}196$). 
+
+![Groups created by the gmm model](images/gmm_model_groups.png){#fig-gmm-groups fig-align="center" width=50%}
+
 
 We then fit separate linear regression models within each component. The resulting in-sample fit is weaker than the single pooled regression. The component-wise $R^2$ values drop to approximately 0.38 and 0.52. A likely explanation is that splitting the data reduces the effective sample size within each group while retaining a large number of indicator predictors, leading to noisier and less stable estimates. Overall, this mixture-based strategy does not substantially improve our ability to explain variation in ticket sales using the limited feature set.
 
